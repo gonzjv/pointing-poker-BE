@@ -1,17 +1,18 @@
 const users = [];
 
-const addUser = (id, name, room) => {
+const addUser = (id, name, lobby) => {
   const existingUser = users.find(
     (user) => user.name.trim().toLowerCase() === name.trim().toLowerCase(),
   );
 
   if (existingUser) return { error: 'Username has already been taken' };
-  if (!name && !room) return { error: 'Username and room are required' };
+  if (!name && !lobby) return { error: 'Username and room are required' };
   if (!name) return { error: 'Username is required' };
-  if (!room) return { error: 'Room is required' };
+  if (!lobby) return { error: 'Room is required' };
 
-  const user = { id, name, room };
+  const user = { id, name, lobby };
   users.push(user);
+  console.log('be-users: ', users);
   return { user };
 };
 
@@ -25,6 +26,6 @@ const deleteUser = (id) => {
   if (index !== -1) return users.splice(index, 1)[0];
 };
 
-const getUsers = (room) => users.filter((user) => user.room === room);
+const getUsers = (lobby) => users.filter((user) => user.lobby === lobby);
 
-export default { addUser, getUser, deleteUser, getUsers };
+module.exports = { addUser, getUser, deleteUser, getUsers };
