@@ -24,7 +24,6 @@ io.on('connection', (socket) => {
   });
   socket.on('createGame', ({ firstName, lastName, jobPosition }, callback) => {
     const game = createGame(socket.id);
-    // const lobby = createLobby(socket.id);
     const { dealer, error } = addDealer(
       firstName + socket.id,
       firstName,

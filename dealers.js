@@ -2,7 +2,6 @@ const dealers = [];
 
 const addDealer = (lobbyID, firstName, lastName, jobPosition) => {
   if (!firstName) return { error: 'First name is required' };
-  if (!firstName && lastName) return { error: 'First name is required' };
 
   const dealer = { lobbyID, firstName, lastName, jobPosition };
   dealers.push(dealer);
