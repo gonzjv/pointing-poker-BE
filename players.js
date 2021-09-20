@@ -1,6 +1,6 @@
 const players = [];
 
-const addPlayer = (id, lobbyID, firstName, lastName, jobPosition) => {
+export const addPlayer = (id, lobbyID, firstName, lastName, jobPosition) => {
   if (!firstName) return { error: 'Player name is required' };
 
   const player = { id, lobbyID, firstName, lastName, jobPosition };
@@ -8,16 +8,15 @@ const addPlayer = (id, lobbyID, firstName, lastName, jobPosition) => {
   return { player };
 };
 
-const getPlayer = (id) => {
+export const getPlayer = (id) => {
   let player = players.find((player) => player.id == id);
   return player;
 };
 
-const deletePlayer = (id) => {
+export const deletePlayer = (id) => {
   const index = users.findIndex((user) => user.id === id);
   if (index !== -1) return users.splice(index, 1)[0];
 };
 
-const getPlayers = (lobby) => players.filter((player) => player.lobbyID === lobby);
-
-module.exports = { addPlayer, getPlayer, deletePlayer, getPlayers };
+export const getPlayers = (lobby) =>
+  players.filter((player) => player.lobbyID === lobby);

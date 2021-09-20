@@ -1,14 +1,22 @@
-const app = require('express')();
-const http = require('http').createServer(app);
-const cors = require('cors');
-const { addDealer, getDealer } = require('./dealers');
+// const app = require('express')();
+// const http = require('http').createServer(app);
+// const cors = require('cors');
+// const io = require('socket.io')(http);
+import express from 'express';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+import cors from 'cors';
 const PORT = process.env.PORT || 5000;
-const { createGame } = require('./games');
-const { addPlayer, getPlayers } = require('./players');
-const io = require('socket.io')(http);
+
+const app = express();
+const httpServer = createServer(app);
+const io = new Server(httpServer, {});
+
+import { addDealer, getDealer } from './dealers.js';
+import { createGame } from './games.js';
+import { addPlayer, getPlayers } from './players.js';
 
 app.use(cors());
-
 io.on('connection', (socket) => {
   socket.on('login', ({ lobbyID, firstName, lastName, jobPosition }, callback) => {
     const { player, error } = addPlayer(
@@ -30,8 +38,10 @@ io.on('connection', (socket) => {
     callback();
   });
   socket.on('checkLobbyID', ({ lobbyID }, callback) => {
-    console.log('rooms: ', socket.rooms);
-    socket.rooms.has(lobbyID) ? callback() : callback('Lobby does not exist');
+    console.log('rooms: ', io.sockets.adapter.rooms);
+    io.sockets.adapter.rooms.has(lobbyID)
+      ? callback()
+      : callback('Lobby does not exist');
   });
   socket.on('createGame', ({ firstName, lastName, jobPosition }, callback) => {
     const game = createGame(socket.id);
@@ -57,6 +67,6 @@ app.get('/', (req, res) => {
   res.send('Server is up and running');
 });
 
-http.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`Listening to ${PORT}`);
 });
