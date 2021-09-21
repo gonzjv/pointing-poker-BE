@@ -1,26 +1,43 @@
-const app = require('express')();
-const http = require('http').createServer(app);
-const cors = require('cors');
-const { addDealer, getDealer } = require('./dealers');
+import express from 'express';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+import cors from 'cors';
 const PORT = process.env.PORT || 5000;
-const { createGame } = require('./games');
-const { addUser, getUser, deleteUser, getUsers } = require('./users');
-const io = require('socket.io')(http);
+
+const app = express();
+const httpServer = createServer(app);
+const io = new Server(httpServer, {});
+
+import { addDealer, getDealer } from './dealers.js';
+import { createGame } from './games.js';
+import { addPlayer, getPlayers } from './players.js';
 
 app.use(cors());
-
 io.on('connection', (socket) => {
-  socket.on('login', ({ name, lobby }, callback) => {
-    const { user, error } = addUser(socket.id, name, lobby);
+  socket.on('login', ({ lobbyID, firstName, lastName, jobPosition }, callback) => {
+    const { player, error } = addPlayer(
+      socket.id,
+      lobbyID,
+      firstName,
+      lastName,
+      jobPosition,
+    );
     if (error) return callback(error);
-    socket.join(user.lobby);
-    socket.in(lobby).emit('notification', {
+    socket.join(player.lobbyID);
+    socket.in(lobbyID).emit('notification', {
       title: "Someone' here",
-      description: `${user.name} just entered the room`,
+      description: `${player.firstName} just entered the room`,
     });
-    io.in(lobby).emit('users', getUsers(lobby));
+    io.in(lobbyID).emit('dealer', getDealer(lobbyID));
+    io.in(lobbyID).emit('players', getPlayers(lobbyID));
 
     callback();
+  });
+  socket.on('checkLobbyID', ({ lobbyID }, callback) => {
+    console.log('rooms: ', io.sockets.adapter.rooms);
+    io.sockets.adapter.rooms.has(lobbyID)
+      ? callback()
+      : callback('Lobby does not exist');
   });
   socket.on('createGame', ({ firstName, lastName, jobPosition }, callback) => {
     const game = createGame(socket.id);
@@ -33,10 +50,8 @@ io.on('connection', (socket) => {
     if (error) {
       return callback(error);
     }
-    console.log('lobbyID before join: ', dealer.lobbyID);
     socket.join(dealer.lobbyID);
-    console.log('lobbyID after join: ', dealer.lobbyID);
-
+    console.log('rooms: ', socket.rooms);
     io.in(dealer.lobbyID).emit('dealer', getDealer(dealer.lobbyID));
     callback();
   });
@@ -48,6 +63,6 @@ app.get('/', (req, res) => {
   res.send('Server is up and running');
 });
 
-http.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`Listening to ${PORT}`);
 });
