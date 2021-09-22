@@ -24,10 +24,9 @@ io.on('connection', (socket) => {
     );
     if (error) return callback(error);
     socket.join(player.lobbyID);
-    socket.in(lobbyID).emit('notification', {
-      title: "Someone' here",
-      description: `${player.firstName} just entered the room`,
-    });
+    socket
+      .in(lobbyID)
+      .emit('notification', `${player.firstName} just entered the room`);
     console.log('rooms after login: ', io.sockets.adapter.rooms);
     io.in(lobbyID).emit('dealer', getDealer(lobbyID));
     io.in(lobbyID).emit('players', getPlayers(lobbyID));
