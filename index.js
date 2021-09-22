@@ -10,7 +10,7 @@ const io = new Server(httpServer, {});
 
 import { addDealer, getDealer } from './dealers.js';
 import { createGame } from './games.js';
-import { addPlayer, getPlayers } from './players.js';
+import { addPlayer, deletePlayer, getPlayers } from './players.js';
 
 app.use(cors());
 io.on('connection', (socket) => {
@@ -28,16 +28,30 @@ io.on('connection', (socket) => {
       title: "Someone' here",
       description: `${player.firstName} just entered the room`,
     });
+    console.log('rooms after login: ', io.sockets.adapter.rooms);
     io.in(lobbyID).emit('dealer', getDealer(lobbyID));
     io.in(lobbyID).emit('players', getPlayers(lobbyID));
 
     callback();
   });
   socket.on('checkLobbyID', ({ lobbyID }, callback) => {
-    console.log('rooms: ', io.sockets.adapter.rooms);
+    console.log('check rooms: ', io.sockets.adapter.rooms);
     io.sockets.adapter.rooms.has(lobbyID)
       ? callback()
       : callback('Lobby does not exist');
+  });
+  socket.on('exit', (callback) => {
+    const player = deletePlayer(socket.id);
+    console.log('player= ', player);
+    if (player) {
+      io.in(player.lobbyID).emit('notification', {
+        title: 'Someone just left',
+        description: `${player.firstName}`,
+      });
+      io.in(player.lobbyID).emit('players', getPlayers(player.lobbyID));
+      socket.leave(player.lobbyID);
+      callback();
+    }
   });
   socket.on('createGame', ({ firstName, lastName, jobPosition }, callback) => {
     const game = createGame(socket.id);
@@ -51,7 +65,6 @@ io.on('connection', (socket) => {
       return callback(error);
     }
     socket.join(dealer.lobbyID);
-    console.log('rooms: ', socket.rooms);
     io.in(dealer.lobbyID).emit('dealer', getDealer(dealer.lobbyID));
     callback();
   });
