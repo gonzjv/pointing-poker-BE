@@ -10,7 +10,7 @@ const io = new Server(httpServer, {});
 
 import { addDealer, getDealer } from './dealers.js';
 import { createGame } from './games.js';
-import { addPlayer, deletePlayer, getPlayers } from './players.js';
+import { addPlayer, deletePlayer, getPlayer, getPlayers } from './players.js';
 
 app.use(cors());
 io.on('connection', (socket) => {
@@ -54,12 +54,7 @@ io.on('connection', (socket) => {
   });
   socket.on('createGame', ({ firstName, lastName, jobPosition }, callback) => {
     const game = createGame(socket.id);
-    const { dealer, error } = addDealer(
-      firstName + socket.id,
-      firstName,
-      lastName,
-      jobPosition,
-    );
+    const { dealer, error } = addDealer(socket.id, firstName, lastName, jobPosition);
     if (error) {
       return callback(error);
     }
@@ -67,7 +62,11 @@ io.on('connection', (socket) => {
     io.in(dealer.lobbyID).emit('dealer', getDealer(dealer.lobbyID));
     callback();
   });
-  socket.on('sendMessage', (message) => {});
+  socket.on('sendMessage', (message) => {
+    console.log('dealer: ', getDealer(socket.id));
+    const user = getPlayer(socket.id) || getDealer(socket.id);
+    io.in(user.lobbyID).emit('message', { user: user.firstName, text: message });
+  });
   socket.on('disconnect', () => {});
 });
 
