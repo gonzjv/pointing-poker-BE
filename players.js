@@ -14,8 +14,9 @@ export const getPlayer = (id) => {
 };
 
 export const deletePlayer = (id) => {
-  const index = users.findIndex((user) => user.id === id);
-  if (index !== -1) return users.splice(index, 1)[0];
+  console.log('players before del: ', players);
+  const index = players.findIndex((player) => player.id === id);
+  if (index !== -1) return players.splice(index, 1)[0];
 };
 
 export const getPlayers = (lobby) =>

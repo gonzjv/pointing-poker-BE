@@ -10,7 +10,7 @@ const io = new Server(httpServer, {});
 
 import { addDealer, getDealer } from './dealers.js';
 import { createGame } from './games.js';
-import { addPlayer, getPlayers } from './players.js';
+import { addPlayer, deletePlayer, getPlayer, getPlayers } from './players.js';
 
 app.use(cors());
 io.on('connection', (socket) => {
@@ -24,38 +24,49 @@ io.on('connection', (socket) => {
     );
     if (error) return callback(error);
     socket.join(player.lobbyID);
-    socket.in(lobbyID).emit('notification', {
-      title: "Someone' here",
-      description: `${player.firstName} just entered the room`,
-    });
+    socket
+      .in(lobbyID)
+      .emit('notification', `${player.firstName} just entered the room`);
+    console.log('rooms after login: ', io.sockets.adapter.rooms);
     io.in(lobbyID).emit('dealer', getDealer(lobbyID));
     io.in(lobbyID).emit('players', getPlayers(lobbyID));
 
     callback();
   });
   socket.on('checkLobbyID', ({ lobbyID }, callback) => {
-    console.log('rooms: ', io.sockets.adapter.rooms);
+    console.log('check rooms: ', io.sockets.adapter.rooms);
     io.sockets.adapter.rooms.has(lobbyID)
       ? callback()
       : callback('Lobby does not exist');
   });
+  socket.on('exit', (callback) => {
+    const player = deletePlayer(socket.id);
+    console.log('player= ', player);
+    if (player) {
+      io.in(player.lobbyID).emit('notification', {
+        title: 'Someone just left',
+        description: `${player.firstName}`,
+      });
+      io.in(player.lobbyID).emit('players', getPlayers(player.lobbyID));
+      socket.leave(player.lobbyID);
+      callback();
+    }
+  });
   socket.on('createGame', ({ firstName, lastName, jobPosition }, callback) => {
     const game = createGame(socket.id);
-    const { dealer, error } = addDealer(
-      firstName + socket.id,
-      firstName,
-      lastName,
-      jobPosition,
-    );
+    const { dealer, error } = addDealer(socket.id, firstName, lastName, jobPosition);
     if (error) {
       return callback(error);
     }
     socket.join(dealer.lobbyID);
-    console.log('rooms: ', socket.rooms);
     io.in(dealer.lobbyID).emit('dealer', getDealer(dealer.lobbyID));
     callback();
   });
-  socket.on('sendMessage', (message) => {});
+  socket.on('sendMessage', (message) => {
+    console.log('dealer: ', getDealer(socket.id));
+    const user = getPlayer(socket.id) || getDealer(socket.id);
+    io.in(user.lobbyID).emit('message', { user: user.firstName, text: message });
+  });
   socket.on('disconnect', () => {});
 });
 
