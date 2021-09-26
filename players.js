@@ -14,7 +14,6 @@ export const getPlayer = (id) => {
 };
 
 export const deletePlayer = (id) => {
-  console.log('players before del: ', players);
   const index = players.findIndex((player) => player.id === id);
   if (index !== -1) return players.splice(index, 1)[0];
 };
