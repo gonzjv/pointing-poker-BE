@@ -65,11 +65,13 @@ io.on('connection', (socket) => {
   socket.on('deletePlayer', (id, dealerID) => {
     const deleteByDealer = (playerID) => {
       const player = deletePlayer(playerID);
-      console.log('players: ', getPlayers(player.lobbyID));
       io.in(player.lobbyID).emit('players', getPlayers(player.lobbyID));
+      io.to(player.id).emit('kickFromLobby');
     };
 
-    socket.id === dealerID ? deleteByDealer(id) : {};
+    socket.id === dealerID
+      ? deleteByDealer(id)
+      : console.log('you are not a dealer, little nerd!');
   });
 });
 
