@@ -41,12 +41,8 @@ io.on('connection', (socket) => {
   });
   socket.on('exit', (callback) => {
     const player = deletePlayer(socket.id);
-    console.log('player= ', player);
     if (player) {
-      io.in(player.lobbyID).emit('notification', {
-        title: 'Someone just left',
-        description: `${player.firstName}`,
-      });
+      io.in(player.lobbyID).emit('notification', `${player.firstName} just left`);
       io.in(player.lobbyID).emit('players', getPlayers(player.lobbyID));
       socket.leave(player.lobbyID);
       callback();
@@ -63,11 +59,20 @@ io.on('connection', (socket) => {
     callback();
   });
   socket.on('sendMessage', (message) => {
-    console.log('dealer: ', getDealer(socket.id));
     const user = getPlayer(socket.id) || getDealer(socket.id);
     io.in(user.lobbyID).emit('message', { user: user.firstName, text: message });
   });
-  socket.on('disconnect', () => {});
+  socket.on('deletePlayer', (id, dealerID) => {
+    const deleteByDealer = (playerID) => {
+      const player = deletePlayer(playerID);
+      io.in(player.lobbyID).emit('players', getPlayers(player.lobbyID));
+      io.to(player.id).emit('kickFromLobby');
+    };
+
+    socket.id === dealerID
+      ? deleteByDealer(id)
+      : console.log('you are not a dealer, little nerd!');
+  });
 });
 
 app.get('/', (req, res) => {
