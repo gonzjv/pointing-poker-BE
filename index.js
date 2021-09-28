@@ -67,6 +67,10 @@ io.on('connection', (socket) => {
       const player = deletePlayer(playerID);
       io.in(player.lobbyID).emit('players', getPlayers(player.lobbyID));
       io.to(player.id).emit('kickFromLobby');
+      io.in(player.lobbyID).emit(
+        'notification',
+        `${player.firstName} kicked by dealer`,
+      );
     };
 
     socket.id === dealerID
