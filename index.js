@@ -11,6 +11,7 @@ const io = new Server(httpServer, {});
 import { addDealer, getDealer } from './dealers.js';
 import { createGame } from './games.js';
 import { addPlayer, deletePlayer, getPlayer, getPlayers } from './players.js';
+import { addVoting, getVoting, addVote, resetVoting } from './voting.js';
 
 app.use(cors());
 io.on('connection', (socket) => {
@@ -62,23 +63,37 @@ io.on('connection', (socket) => {
     const user = getPlayer(socket.id) || getDealer(socket.id);
     io.in(user.lobbyID).emit('message', { user: user.firstName, text: message });
   });
-  socket.on('deletePlayer', (id, dealerID) => {
-    const deleteByDealer = (playerID) => {
-      const player = deletePlayer(playerID);
-      io.in(player.lobbyID).emit('players', getPlayers(player.lobbyID));
+  socket.on('deletePlayer', (id) => {
+    const player = deletePlayer(id);
+    io.in(player.lobbyID).emit('players', getPlayers(player.lobbyID));
+    io.to(player.id).emit('kickFromLobby');
+    io.in(player.lobbyID).emit(
+      'notification',
+      `${player.firstName} kicked by dealer`,
+    );
+  });
+  socket.on('startVoting', (player, initiatorID) => {
+    const initiator = getPlayer(initiatorID);
+    const votersCount = getPlayers(initiator.lobbyID).length;
+    const voting = addVoting(initiatorID, 0, votersCount);
+    socket.in(player.lobbyID).emit('votingPopup', player, initiator);
+  });
+  socket.on('vote', (votingID, player) => {
+    const voting = addVote(votingID);
+    socket.emit('voteCount', voting);
+    const kickPlayer = () => {
+      const kickedPlayer = deletePlayer(player.id);
       io.to(player.id).emit('kickFromLobby');
+      io.in(player.lobbyID).emit('players', getPlayers(player.lobbyID));
       io.in(player.lobbyID).emit(
         'notification',
-        `${player.firstName} kicked by dealer`,
+        `${player.firstName} kicked by voting`,
       );
+      resetVoting(votingID);
     };
-
-    socket.id === dealerID
-      ? deleteByDealer(id)
-      : console.log('you are not a dealer, little nerd!');
+    voting.count >= voting.approveCount ? kickPlayer() : {};
   });
 });
-
 app.get('/', (req, res) => {
   res.send('Server is up and running');
 });
