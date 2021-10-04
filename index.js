@@ -51,7 +51,13 @@ io.on('connection', (socket) => {
   });
   socket.on('createGame', ({ firstName, lastName, jobPosition }, callback) => {
     const game = createGame(socket.id);
-    const { dealer, error } = addDealer(socket.id, firstName, lastName, jobPosition);
+    const { dealer, error } = addDealer(
+      socket.id,
+      socket.id,
+      firstName,
+      lastName,
+      jobPosition,
+    );
     if (error) {
       return callback(error);
     }
@@ -75,20 +81,24 @@ io.on('connection', (socket) => {
   socket.on('startVoting', (player, initiatorID) => {
     const initiator = getPlayer(initiatorID);
     const votersCount = getPlayers(initiator.lobbyID).length;
-    const voting = addVoting(initiatorID, 0, votersCount);
-    socket.in(player.lobbyID).emit('votingPopup', player, initiator);
+    const voting = addVoting(initiatorID, 1, votersCount);
+    socket
+      .in(player.lobbyID)
+      .except(player.id)
+      .emit('votingPopup', player, initiator);
   });
   socket.on('vote', (votingID, player) => {
     const voting = addVote(votingID);
     socket.emit('voteCount', voting);
     const kickPlayer = () => {
-      const kickedPlayer = deletePlayer(player.id);
+      deletePlayer(player.id);
       io.to(player.id).emit('kickFromLobby');
       io.in(player.lobbyID).emit('players', getPlayers(player.lobbyID));
       io.in(player.lobbyID).emit(
         'notification',
         `${player.firstName} kicked by voting`,
       );
+      io.in(player.lobbyID).emit('closeVoting');
       resetVoting(votingID);
     };
     voting.count >= voting.approveCount ? kickPlayer() : {};
