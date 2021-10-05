@@ -103,6 +103,9 @@ io.on('connection', (socket) => {
     };
     voting.count >= voting.approveCount ? kickPlayer() : {};
   });
+  socket.on('startGame', (lobbyID) => {
+    io.in(lobbyID).emit('dealerStartGame');
+  });
 });
 app.get('/', (req, res) => {
   res.send('Server is up and running');
