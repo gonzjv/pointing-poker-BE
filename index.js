@@ -12,6 +12,7 @@ import { addDealer, getDealer } from './dealers.js';
 import { createGame } from './games.js';
 import { addPlayer, deletePlayer, getPlayer, getPlayers } from './players.js';
 import { addVoting, getVoting, addVote, resetVoting } from './voting.js';
+import { addIssue, getIssues } from './issues.js';
 
 app.use(cors());
 io.on('connection', (socket) => {
@@ -61,6 +62,7 @@ io.on('connection', (socket) => {
     if (error) {
       return callback(error);
     }
+    console.log('DEALER: ', dealer);
     socket.join(dealer.lobbyID);
     io.in(dealer.lobbyID).emit('dealer', getDealer(dealer.lobbyID));
     callback();
@@ -105,6 +107,23 @@ io.on('connection', (socket) => {
   });
   socket.on('startGame', (lobbyID) => {
     io.in(lobbyID).emit('dealerStartGame');
+  });
+  socket.on('addIssue', ({ lobbyID, title, link, priority }, callback) => {
+    const { issue, error } = addIssue(
+      lobbyID + title,
+      lobbyID,
+      title,
+      link,
+      priority,
+      true,
+    );
+    if (error) {
+      return callback(error);
+    }
+    socket.join(lobbyID);
+    io.in(lobbyID).emit('refreshIssues', getIssues(lobbyID));
+    console.log('issues: ', getIssues(lobbyID));
+    callback();
   });
 });
 app.get('/', (req, res) => {
