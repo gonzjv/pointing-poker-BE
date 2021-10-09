@@ -13,6 +13,7 @@ import { createGame } from './games.js';
 import { addPlayer, deletePlayer, getPlayer, getPlayers } from './players.js';
 import { addVoting, getVoting, addVote, resetVoting } from './voting.js';
 import { addIssue, getIssues } from './issues.js';
+import { choiseCards, getCards } from './cards.js';
 
 app.use(cors());
 io.on('connection', (socket) => {
@@ -123,6 +124,12 @@ io.on('connection', (socket) => {
     socket.join(lobbyID);
     io.in(lobbyID).emit('refreshIssues', getIssues(lobbyID));
     console.log('issues: ', getIssues(lobbyID));
+    callback();
+  });
+  socket.on('choiseCards', ({ lobbyID, typeCard }, callback) => {
+    choiseCards(typeCard);
+    socket.join(lobbyID);
+    io.in(lobbyID).emit('refreshCards', getCards(lobbyID));
     callback();
   });
 });
