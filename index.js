@@ -14,6 +14,7 @@ import { addPlayer, deletePlayer, getPlayer, getPlayers } from './players.js';
 import { addVoting, getVoting, addVote, resetVoting } from './voting.js';
 import { addIssue, getIssues } from './issues.js';
 import { addGameVote, getGameVotes } from './game-voting.js';
+import handleGame from './handle-game.js';
 
 app.use(cors());
 io.on('connection', (socket) => {
@@ -131,6 +132,7 @@ io.on('connection', (socket) => {
     socket.join(lobbyID);
     io.in(lobbyID).emit('sendVotes', getGameVotes(issueID));
   });
+  handleGame(socket, io);
 });
 app.get('/', (req, res) => {
   res.send('Server is up and running');
