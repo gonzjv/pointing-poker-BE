@@ -1,4 +1,4 @@
-import { getGameVotes } from './game-voting.js';
+import { addGameVote, getGameVotes, getResults } from './game-voting.js';
 
 const handleGame = (socket, io) => {
   socket.on('startGame', (lobbyID) => {
@@ -16,7 +16,7 @@ const handleGame = (socket, io) => {
   });
 
   socket.on('stopGame', (lobbyID) => {
-    io.in(lobbyID).emit('dealerStopGame');
+    io.in(lobbyID).emit('dealerStopGame', getResults(lobbyID));
   });
 };
 
