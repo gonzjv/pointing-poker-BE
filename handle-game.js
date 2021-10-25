@@ -10,13 +10,17 @@ const handleGame = (socket, io) => {
   });
 
   socket.on('addGameVote', (lobbyID, issueID, cardValue) => {
-    addGameVote(lobbyID, socket.id, issueID, cardValue);
+    const vote = addGameVote(lobbyID, socket.id, issueID, cardValue);
+
     socket.join(lobbyID);
     io.in(lobbyID).emit('sendVotes', getGameVotes(issueID));
   });
 
   socket.on('stopGame', (lobbyID) => {
     io.in(lobbyID).emit('dealerStopGame', getResults(lobbyID));
+  });
+  socket.on('changeCurrentIssue', (issue, lobbyID) => {
+    io.in(lobbyID).emit('dealerSetIssue', issue);
   });
 };
 
